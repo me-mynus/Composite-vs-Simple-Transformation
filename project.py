@@ -17,7 +17,7 @@ polygon_vertices = np.array([
 x0, y0 = 600, 600
 
 tx, ty = 200, 200
-sx, sy = 2.0, 2.0
+sx, sy = 1.25, 1.25
 theta = 45.0
 shx, shy = 2.0, 2.0
 
@@ -35,14 +35,14 @@ def translate(tx, ty, vertices):
     vertices[1] += ty
     return vertices
 
-def rotate(degree, vertices):
+def rotate(theta, vertices):
     vertices[0] = vertices[0] * np.cos(np.radians(theta)) - vertices[1] * np.sin(np.radians(theta))
     vertices[1] = vertices[0] * np.sin(np.radians(theta)) + vertices[1] * np.cos(np.radians(theta))
     return vertices
 
 def scale(sx, sy, vertices):
-    vertices[0] = sx * vertices
-    vertices[1] = sy * vertices
+    vertices[0] = sx * vertices[0]
+    vertices[1] = sy * vertices[1]
     return vertices
 
 def shear(shx, shy, vertices):
@@ -65,6 +65,31 @@ def reflection(along, vertices):
         print("Envalid input:")
     return vertices
 
+
+def which_step(no, vertices, along):
+    if no == 1:
+        return translate(tx, ty, vertices)
+    elif no == 2:
+        return rotate(theta, vertices)
+    elif no == 3:
+        return scale(sx, sy, vertices)
+    elif no == 4:
+        return shear(shx, shy, vertices)
+    elif no == 5:
+        return reflection(along, vertices)
+
+def simple_tranformation(num, res_arr, along):
+    dummy = polygon_vertices.copy()
+    for vertices in dummy:
+        vertices[0] -= x0
+        vertices[1] -= y0
+    for i in range(num):
+        for vertices in dummy:
+            vertices = which_step(res_arr[i], vertices, along)
+    for vertices in dummy:
+        vertices[0] += x0
+        vertices[1] += y0
+    return dummy
 #Composite Matrics Modules
 
 def user_input():
@@ -139,24 +164,20 @@ def transformed_matrix_calculation(polygon, composite_matrix):
     return dummy
     
     
-#def draw_rectangle_transformed(polygon):
-#    glBegin(GL_POLYGON)
-#    for vertex in rectangle_vertices:
-#        vertex = transform_composite(composite_matrix, vertex[0], vertex[1])
-#       glVertex2f(vertex[0], vertex[1])
-#    glEnd()
-
 def display(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
+    
+    #Original in red
     glColor3f(1,0,0 )
     draw_polygon(x)
-    # Apply transformation without composite matrix
+    
+    #Transformed in green
     glColor3f(0, 1, 0)
     draw_polygon(y)
-    # Apply transformation with composite matrix
+    
     glFlush()
 
-# Initialize OpenGL window
+
 def render(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
     glMatrixMode(GL_PROJECTION)
@@ -164,19 +185,16 @@ def render(x,y):
     glOrtho(0.0, width, 0.0, height, 0.0, 1.0)
     display(x,y)
 
-def main():
+def composite_method():
+    print("--------------- COMPOSITE TRANSFORAMTION ---------------")
     t_array, r_type, num = user_input()
     reflection_matrix = ref_mat_calc(r_type)
     composite_transformation_matrix = comp_composite(num, t_array)
-    print(composite_transformation_matrix)
-    print(polygon_vertices)
     transformed_polygon = transformed_matrix_calculation(polygon_vertices, composite_transformation_matrix)
-    print(polygon_vertices)
-    print(transformed_polygon)
     
     glfw.init()
 
-    window = glfw.create_window(width, height, "Ellipse Drawing", None, None)
+    window = glfw.create_window(width, height, "Composite Transformation", None, None)
     glfw.make_context_current(window)
     while not glfw.window_should_close(window):
 
@@ -186,8 +204,31 @@ def main():
         glfw.poll_events()
         glfw.swap_buffers(window)
     glfw.terminate()
+
+def simple_method():
     
-main()
+    print("--------------- Simple TRANSFORAMTION ---------------")
+    t_array, r_type, num = user_input()
+    transformed_polygon= simple_tranformation(num, t_array, r_type)
+    
+    
+    glfw.init()
+
+    window = glfw.create_window(width, height, "Simple Transformation", None, None)
+    glfw.make_context_current(window)
+    while not glfw.window_should_close(window):
+
+        render(polygon_vertices, transformed_polygon)
+        if glfw.PRESS == glfw.get_key(window, glfw.KEY_ESCAPE):
+            glfw.set_window_should_close(window, True)
+        glfw.poll_events()
+        glfw.swap_buffers(window)
+    glfw.terminate()
+
+#composite_method()
+simple_method()
+
+
 
 
 
