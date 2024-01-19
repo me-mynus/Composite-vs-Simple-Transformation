@@ -3,17 +3,20 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import numpy as np
 
+width = 1000
+height = 1000
+
 #Global variables
-rectangle_vertices = [
-    [100, 100],
-    [100, 600],
-    [600, 100],
-    [600, 600]
-]
+polygon_vertices = np.array([
+    [400, 400],
+    [800, 400],
+    [800, 800],
+    [400, 800]
+])
 
-x0, y0 = 300, 300
+x0, y0 = 600, 600
 
-tx, ty = 0.0, 0.0
+tx, ty = 200, 200
 sx, sy = 2.0, 2.0
 theta = 45.0
 shx, shy = 2.0, 2.0
@@ -74,7 +77,7 @@ def user_input():
     print(arr_transformation)
     print(r_type)
     
-    return arr_transformation, r_type
+    return arr_transformation, r_type, num
 
 
 base_translate_1 = np.array([[1, 0, x0], [0, 1, y0], [0, 0, 1]])
@@ -103,25 +106,7 @@ def ref_mat_calc(along):
 
 # Transformation matrices
 
-def comp_composite(num, res_arr):
-    composite_matrix = base_translate_2
-    for i in range(num):
-        composite_matrix = np.dot(which(res_arr[i]),composite_matrix)
-    return composite_matrix
-
-def transform_composite(composite_matrix, x, y):
-    original = np.array([x, y, 1])
-    ans = np.dot(np.dot(base_translate_1, composite_matrix), original)
-    return ans
-
-
-def draw_rectangle_transformed(composite_matrix):
-    glBegin(GL_QUADS)
-    for vertex in rectangle_vertices:
-        vertex = transform_composite(composite_matrix, vertex[0], vertex[1])
-        glVertex2f(vertex[0], vertex[1])
-    glEnd()
-
+#Relate array to type
 def which(no):
     if no == 1:
         return translation_matrix
@@ -134,77 +119,77 @@ def which(no):
     elif no == 5:
         return reflection_matrix
 
+#Give off composite matrix
+def comp_composite(num, res_arr):
+    composite_matrix = base_translate_2.copy()
+    for i in range(num):
+        composite_matrix = np.dot(which(res_arr[i]),composite_matrix)
+    composite_matrix = np.dot(base_translate_1, composite_matrix)
+    return composite_matrix
 
-# Function to apply transformation without using composite matrix
-def apply_transform_without_composite(x, y):
-    # Translation
-    x -= x0
-    y -= y0
+def transform_composite(composite_matrix, x, y):
+    original = np.array([x, y, 1])
+    transformed = np.dot(composite_matrix, original)
+    return transformed[0], transformed[1]
 
-    # Rotation
-    x_rot = x * np.cos(np.radians(theta)) - y * np.sin(np.radians(theta))
-    y_rot = x * np.sin(np.radians(theta)) + y * np.cos(np.radians(theta))
-
-    # Scaling
-    x_scale = x_rot * scale_factor
-    y_scale = y_rot * scale_factor
-
-    # Shearing
-    x_shear = x_scale + y_scale * shear_factor
-    y_shear = y_scale + x_scale * shear_factor
-
-    # Translation back
-    x_shear += x0
-    y_shear += y0
-
-    return x_shear, y_shear
-
-# Function to apply transformation using composite matrix
-def a1():
-    point = np.array([x, y, 1])
-    transformed_point = np.dot(composite_matrix, point)
-    return transformed_point[0], transformed_point[1]
-
-def main():
-    t_array, r_type = user_input()
-    reflection_matrix = ref_mat_calc(r_type)
-    print(reflection_matrix)
+def transformed_matrix_calculation(polygon, composite_matrix):
+    dummy = polygon.copy()
+    for points in dummy:
+        points[0], points[1] = transform_composite(composite_matrix, points[0], points[1])
+    return dummy
     
+    
+#def draw_rectangle_transformed(polygon):
+#    glBegin(GL_POLYGON)
+#    for vertex in rectangle_vertices:
+#        vertex = transform_composite(composite_matrix, vertex[0], vertex[1])
+#       glVertex2f(vertex[0], vertex[1])
+#    glEnd()
 
-main()
-
-def display():
+def display(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
-    glColor3f(1, 1, 1)
-
+    glColor3f(1,0,0 )
+    draw_polygon(x)
     # Apply transformation without composite matrix
-    glColor3f(1, 0, 0)
-
+    glColor3f(0, 1, 0)
+    draw_polygon(y)
     # Apply transformation with composite matrix
-    glColor3f(0, 0, 1)
-
     glFlush()
 
 # Initialize OpenGL window
-def render():
+def render(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     glOrtho(0.0, width, 0.0, height, 0.0, 1.0)
-    display()
+    display(x,y)
 
-glfw.init()
+def main():
+    t_array, r_type, num = user_input()
+    reflection_matrix = ref_mat_calc(r_type)
+    composite_transformation_matrix = comp_composite(num, t_array)
+    print(composite_transformation_matrix)
+    print(polygon_vertices)
+    transformed_polygon = transformed_matrix_calculation(polygon_vertices, composite_transformation_matrix)
+    print(polygon_vertices)
+    print(transformed_polygon)
+    
+    glfw.init()
 
-width = 800
-height = 550
+    window = glfw.create_window(width, height, "Ellipse Drawing", None, None)
+    glfw.make_context_current(window)
+    while not glfw.window_should_close(window):
 
-window = glfw.create_window(width, height, "Ellipse Drawing", None, None)
-glfw.make_context_current(window)
-while not glfw.window_should_close(window):
+        render(polygon_vertices, transformed_polygon)
+        if glfw.PRESS == glfw.get_key(window, glfw.KEY_ESCAPE):
+            glfw.set_window_should_close(window, True)
+        glfw.poll_events()
+        glfw.swap_buffers(window)
+    glfw.terminate()
+    
+main()
 
-    render()
-    if glfw.PRESS == glfw.get_key(window, glfw.KEY_ESCAPE):
-        glfw.set_window_should_close(window, True)
-    glfw.poll_events()
-    glfw.swap_buffers(window)
-glfw.terminate()
+
+
+
+

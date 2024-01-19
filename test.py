@@ -1,7 +1,23 @@
 import numpy as np
 
-a = np.array([[1,2,3],[2,4,6]])
-b = np.array([1,2])
-d = np.dot(b,a)
+c_matrix = ([[1,0,200],[0,1,200],[0,0,1]])
 
-print(d)
+polygon_vertices = np.array([
+    [400, 400],
+    [800, 400],
+    [800, 800],
+    [400, 800]
+])
+
+def transformed_matrix_calculation(polygon, composite_matrix):
+    dummy = polygon.copy()
+    for points in dummy:
+        print(points)
+        o_vertex = np.array([points[0], points[1], 1])
+        transformed = np.dot(composite_matrix, o_vertex)
+        points[0], points[1] = transformed[0], transformed[1]
+        print("Here", transformed)
+    return dummy
+
+output = transformed_matrix_calculation(polygon_vertices, c_matrix) 
+print(output)
