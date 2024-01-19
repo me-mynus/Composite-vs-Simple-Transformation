@@ -2,21 +2,21 @@ import glfw
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 import numpy as np
+import time
 
 width = 1000
 height = 1000
 
 #Global variables
 polygon_vertices = np.array([
-    [400, 400],
-    [800, 400],
-    [800, 800],
-    [400, 800]
+    [0.4, 0.5],
+    [0.8, 0.4],
+    [0.8, 0.8],
+    [0.4, 0.8]
 ])
 
-x0, y0 = 600, 600
-
-tx, ty = 200, 200
+x0, y0 = 0.500, 0.500
+tx, ty = 0.200, 0.200
 sx, sy = 1.25, 1.25
 theta = 45.0
 shx, shy = 2.0, 2.0
@@ -24,6 +24,7 @@ shx, shy = 2.0, 2.0
 translate_factor = np.array([10,0])
 
 def draw_polygon(polygon):
+    glLoadIdentity()
     glBegin(GL_POLYGON)
     for vertex in polygon:
         glVertex2f(vertex[0], vertex[1])
@@ -36,8 +37,9 @@ def translate(tx, ty, vertices):
     return vertices
 
 def rotate(theta, vertices):
+    temp = vertices[0]
     vertices[0] = vertices[0] * np.cos(np.radians(theta)) - vertices[1] * np.sin(np.radians(theta))
-    vertices[1] = vertices[0] * np.sin(np.radians(theta)) + vertices[1] * np.cos(np.radians(theta))
+    vertices[1] = temp * np.sin(np.radians(theta)) + vertices[1] * np.cos(np.radians(theta))
     return vertices
 
 def scale(sx, sy, vertices):
@@ -59,8 +61,9 @@ def reflection(along, vertices):
         vertices[0] = -vertices[0]
         vertices[1] = vertices[1]
     elif along == 3:
+        temp = vertices[0]
         vertices[0] = vertices[1]
-        vertices[1] = vertices[0]
+        vertices[1] = temp
     else:
         print("Envalid input:")
     return vertices
@@ -90,6 +93,7 @@ def simple_tranformation(num, res_arr, along):
         vertices[0] += x0
         vertices[1] += y0
     return dummy
+
 #Composite Matrics Modules
 
 def user_input():
@@ -132,7 +136,7 @@ def ref_mat_calc(along):
 # Transformation matrices
 
 #Relate array to type
-def which(no):
+def which(no, mat):
     if no == 1:
         return translation_matrix
     elif no == 2:
@@ -142,13 +146,13 @@ def which(no):
     elif no == 4:
         return shearing_matrix
     elif no == 5:
-        return reflection_matrix
+        return mat
 
 #Give off composite matrix
-def comp_composite(num, res_arr):
+def comp_composite(num, res_arr, mat):
     composite_matrix = base_translate_2.copy()
     for i in range(num):
-        composite_matrix = np.dot(which(res_arr[i]),composite_matrix)
+        composite_matrix = np.dot(which(res_arr[i], mat),composite_matrix)
     composite_matrix = np.dot(base_translate_1, composite_matrix)
     return composite_matrix
 
@@ -168,7 +172,7 @@ def display(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
     
     #Original in red
-    glColor3f(1,0,0 )
+    glColor3f(1, 0, 0 )
     draw_polygon(x)
     
     #Transformed in green
@@ -189,8 +193,12 @@ def composite_method():
     print("--------------- COMPOSITE TRANSFORAMTION ---------------")
     t_array, r_type, num = user_input()
     reflection_matrix = ref_mat_calc(r_type)
-    composite_transformation_matrix = comp_composite(num, t_array)
+    composite_transformation_matrix = comp_composite(num, t_array, reflection_matrix)
+    composite_start= time.time()
     transformed_polygon = transformed_matrix_calculation(polygon_vertices, composite_transformation_matrix)
+    composite_end= time.time()
+    
+    print(f"Computation time for composite = {(composite_end - composite_start):.10f}")
     
     glfw.init()
 
@@ -209,8 +217,10 @@ def simple_method():
     
     print("--------------- Simple TRANSFORAMTION ---------------")
     t_array, r_type, num = user_input()
+    simple_start = time.time()
     transformed_polygon= simple_tranformation(num, t_array, r_type)
-    
+    simple_end = time.time()
+    print(f"Computation time for simple= {(simple_end - simple_start):.10f}")
     
     glfw.init()
 
@@ -225,9 +235,11 @@ def simple_method():
         glfw.swap_buffers(window)
     glfw.terminate()
 
-#composite_method()
-simple_method()
 
+composite_method()
+
+simple_method()
+    
 
 
 
