@@ -9,19 +9,18 @@ height = 1000
 
 #Global variables
 polygon_vertices = np.array([
-    [0.4, 0.5],
-    [0.8, 0.4],
-    [0.8, 0.8],
-    [0.4, 0.8]
+    [0.2, 0.2],
+    [0.4, 0.2],
+    [0.4, 0.4],
+    [0.2, 0.4]
 ])
 
-x0, y0 = 0.500, 0.500
-tx, ty = 0.200, 0.200
+x0, y0 = 0.300, 0.300
+
+tx, ty = 0.100, 0.100
 sx, sy = 1.25, 1.25
 theta = 45.0
 shx, shy = 2.0, 2.0
-
-translate_factor = np.array([10,0])
 
 def draw_polygon(polygon):
     glLoadIdentity()
@@ -86,21 +85,25 @@ def simple_tranformation(num, res_arr, along):
     for vertices in dummy:
         vertices[0] -= x0
         vertices[1] -= y0
+    print(f"Matrix on iteration 1.\n{dummy}\n")
     for i in range(num):
         for vertices in dummy:
             vertices = which_step(res_arr[i], vertices, along)
+        print(f"Matrix on iteration {i+2}.\n{dummy}\n")
     for vertices in dummy:
         vertices[0] += x0
         vertices[1] += y0
+    print(f"Matrix on final iteration.\n{dummy}\n")
     return dummy
 
 #Composite Matrics Modules
 
 def user_input():
-    num = int(input(("Number of transformations.")))
+    num = int(input(("Number of transformations:")))
     arr_transformation = [0 for i in range (num)]
     for i in range(num):
-        print("1. Translation\n2. Rotation\n3. Scale\n4. Shear\n5. Reflection")
+        print(f"Type of transformation in iteration {i+1}.")
+        print("1. Translation\n2. Rotation\n3. Scale\n4. Shear\n5. Reflection\n")
         arr_transformation[i] = int(input())
     r_type = int(input("Type of reflection:\n1 for along x-axis.\n2 for along y-axis.\n3 for along x=y.\n"))
     print(arr_transformation)
@@ -165,8 +168,8 @@ def transformed_matrix_calculation(polygon, composite_matrix):
     dummy = polygon.copy()
     for points in dummy:
         points[0], points[1] = transform_composite(composite_matrix, points[0], points[1])
+    print(f"Matrix on final iteration.\n{dummy}\n")
     return dummy
-    
     
 def display(x,y):
     glClear(GL_COLOR_BUFFER_BIT)
@@ -190,7 +193,7 @@ def render(x,y):
     display(x,y)
 
 def composite_method():
-    print("--------------- COMPOSITE TRANSFORAMTION ---------------")
+    print("\n\n--------------- COMPOSITE TRANSFORAMTION ---------------\n\n")
     t_array, r_type, num = user_input()
     reflection_matrix = ref_mat_calc(r_type)
     composite_transformation_matrix = comp_composite(num, t_array, reflection_matrix)
@@ -215,7 +218,7 @@ def composite_method():
 
 def simple_method():
     
-    print("--------------- Simple TRANSFORAMTION ---------------")
+    print("\n\n--------------- Simple TRANSFORAMTION ---------------\n\n")
     t_array, r_type, num = user_input()
     simple_start = time.time()
     transformed_polygon= simple_tranformation(num, t_array, r_type)
@@ -240,9 +243,3 @@ composite_method()
 
 simple_method()
     
-
-
-
-
-
-
